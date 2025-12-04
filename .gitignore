@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Project-specific ignores
+unlearning_env/
+controller_model/intent_classifier_model/
+unlearning_results_20251130_223118/
+unlearning_results_20251202_183855/
+unlearning_results_20251202_192608/
+unlearning_results_20251202_192900/
