@@ -208,7 +208,7 @@ __marimo__/
 
 
 # Project-specific ignores
-unlearning_env/
+my_env/
 controller_model/intent_classifier_model/
 unlearning_results_20251130_223118/
 unlearning_results_20251202_183855/
