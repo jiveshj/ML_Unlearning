@@ -297,8 +297,8 @@ def main():
     forget_texts = wmdp_dataset_forget
     retain_texts = wmdp_dataset_retain
     
-    # forget_texts = forget_texts[:10]
-    # retain_texts = retain_texts[:10]
+    forget_texts = forget_texts[:2000]
+    retain_texts = retain_texts[:2000]
     
     print(f"Forget set (WMDP-Bio-forget): {len(forget_texts)} samples")
     print(f"Retain set (WMDP-Bio-retain): {len(retain_texts)} samples")

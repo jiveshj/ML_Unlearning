@@ -214,3 +214,5 @@ unlearning_results_20251130_223118/
 unlearning_results_20251202_183855/
 unlearning_results_20251202_192608/
 unlearning_results_20251202_192900/
+sae_activations/forget_sae_activations_layer7.pt
+sae_activations/retain_sae_activations_layer7.pt
