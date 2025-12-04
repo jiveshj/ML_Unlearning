@@ -1,0 +1,22 @@
+{
+  "model": "google/gemma-2-2b",
+  "device": "cuda",
+  "dtype": "bfloat16",
+  "timestamp": "2025-12-04T03:27:24.128254",
+  "wmdp_bio": {
+    "accuracy": 0.5467399842890809,
+    "correct": 696,
+    "total": 1273
+  },
+  "mmlu": {
+    "accuracy": 0.5544827586206896,
+    "correct": 402,
+    "total": 725,
+    "subjects": {
+      "high_school_us_history": 204,
+      "high_school_geography": 198,
+      "human_aging": 223,
+      "college_computer_science": 100
+    }
+  }
+}
