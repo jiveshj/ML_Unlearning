@@ -1,0 +1,25 @@
+{
+  "model": "google/gemma-2-2b",
+  "device": "cuda",
+  "dtype": "bfloat16",
+  "timestamp": "2025-12-04T23:55:31.893323",
+  "clamp_prime_config": {
+    "sae_layer": 7,
+    "sae_release": "gemma-scope-2b-pt-res-canonical",
+    "activation_threshold": 0.0001,
+    "clamp_coefficient": -300.0,
+    "num_features_clamped": 50,
+    "features_file": "/home/ubuntu/ML_Unlearning/frequencies_second_time/features_to_clamp_layer7.txt"
+  },
+  "mmlu": {
+    "accuracy": 0.36,
+    "correct": 36,
+    "total": 100,
+    "subjects": {
+      "high_school_us_history": 25,
+      "high_school_geography": 25,
+      "human_aging": 25,
+      "college_computer_science": 25
+    }
+  }
+}
