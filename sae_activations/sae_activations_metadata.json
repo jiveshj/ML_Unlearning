@@ -1,8 +1,8 @@
 {
   "model": "google/gemma-2-2b",
   "sae_release": "gemma-scope-2b-pt-res-canonical",
-  "sae_id": "layer_7/width_16k/canonical",
-  "layer_idx": 7,
+  "sae_id": "layer_9/width_16k/canonical",
+  "layer_idx": 9,
   "max_length": 128,
   "d_sae": 16384,
   "d_model": 2304,

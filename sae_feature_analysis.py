@@ -201,7 +201,7 @@ def load_wmdp_bio_retain(max_samples: Optional[int] = None) -> List[str]:
 def load_model_and_sae(
     model_name: str = "google/gemma-2-2b",
     sae_release: str = "gemma-scope-2b-pt-res-canonical",
-    sae_id: str = "layer_7/width_16k/canonical",
+    sae_id: str = "layer_9/width_16k/canonical",
     device: torch.device = None,
 ):
     """
