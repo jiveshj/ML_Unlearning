@@ -61,7 +61,7 @@ DEFAULT_CONFIG = {
     # Clamp Prime specific config
     "sae_release": "gemma-scope-2b-pt-res-canonical",
     "sae_layer": 7,
-    "activation_threshold": 0.0001,
+    "activation_threshold": 10,
     "clamp_coefficient": -300.0,
 }
 
@@ -252,7 +252,7 @@ class ClampPrimeHook:
         self,
         sae_wrapper: GemmaScopeWrapper,
         harmful_features: List[int],
-        activation_threshold: float = 0.0001,
+        activation_threshold: float = -torch.finfo(torch.float32).tiny,
         clamp_coefficient: float = -300.0,
         device: torch.device = None
     ):
@@ -277,21 +277,18 @@ class ClampPrimeHook:
         # Encode to SAE latent space
         latents = self.sae_wrapper.encode(activations)
         
-        # Apply conditional clamping to harmful features
+        # Apply clamping to ALL harmful features (unconditionally)
         for feat_idx in self.harmful_features:
-            # Create mask for active features (above threshold)
             active_mask = latents[..., feat_idx] > self.activation_threshold
-            # Clamp active features to negative coefficient
             latents[..., feat_idx] = torch.where(
                 active_mask,
                 torch.full_like(latents[..., feat_idx], self.clamp_coefficient),
                 latents[..., feat_idx]
             )
         
-        # Decode back to activation space
-        modified_activations = self.sae_wrapper.decode(latents)
         
-        # Ensure output matches original dtype and device
+       # Decode back to activation space (no error term - trust SAE reconstruction)
+        modified_activations = self.sae_wrapper.decode(latents)
         modified_activations = modified_activations.to(dtype=original_dtype, device=original_device)
         
         # CRITICAL: Modify in-place to work with device_map="auto"
@@ -330,12 +327,14 @@ def evaluate_batch(
     tokenizer,
     batch: dict,
     answer_token_ids: Dict[str, int],
-    device: str
-) -> Tuple[List[int], List[int]]:
+    device: str,
+    verbose: bool = False
+) -> Tuple[List[int], List[int], List[dict]]:
     """Evaluate a batch of questions and return predictions and ground truth."""
     input_ids = batch["input_ids"].to(device)
     attention_mask = batch["attention_mask"].to(device)
     answers = batch["answers"]
+    prompts = batch["prompts"]
     
     with torch.no_grad():
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
@@ -345,6 +344,7 @@ def evaluate_batch(
     last_token_logits = logits[:, -1, :]
     
     predictions = []
+    details = []
     for i in range(last_token_logits.size(0)):
         # Get probabilities for each answer choice
         choice_probs = {}
@@ -355,9 +355,31 @@ def evaluate_batch(
         predicted_letter = max(choice_probs, key=choice_probs.get)
         predicted_idx = CHOICE_LETTERS.index(predicted_letter)
         predictions.append(predicted_idx)
+        
+        # Store details for verbose output
+        ground_truth_letter = CHOICE_LETTERS[answers[i]]
+        is_correct = predicted_idx == answers[i]
+        
+        detail = {
+            "prompt": prompts[i],
+            "predicted": predicted_letter,
+            "ground_truth": ground_truth_letter,
+            "correct": is_correct,
+            "logits": choice_probs
+        }
+        details.append(detail)
+        
+        if verbose:
+            # Print a shortened version of the prompt (just the question part)
+            prompt_lines = prompts[i].split('\n')
+            question_part = '\n'.join(prompt_lines[1:6]) if len(prompt_lines) > 1 else prompts[i][:200]
+            status = "✓" if is_correct else "✗"
+            print(f"\n{status} Question: {question_part[:300]}...")
+            print(f"   Predicted: {predicted_letter} | Ground Truth: {ground_truth_letter}")
+            print(f"   Logits: A={choice_probs['A']:.2f}, B={choice_probs['B']:.2f}, C={choice_probs['C']:.2f}, D={choice_probs['D']:.2f}")
 
     
-    return predictions, answers
+    return predictions, answers, details
 
 
 def run_evaluation(
@@ -366,24 +388,25 @@ def run_evaluation(
     dataloader: DataLoader,
     answer_token_ids: Dict[str, int],
     device: str,
-    dataset_name: str = "Dataset"
+    dataset_name: str = "Dataset",
+    verbose: bool = False
 ) -> Dict:
     """Run evaluation on a dataset."""
     model.eval()
     
     all_predictions = []
     all_answers = []
+    all_details = []
     
     print(f"\nEvaluating {dataset_name}...")
     
-    for batch in tqdm(dataloader, desc=f"Evaluating {dataset_name}"):
-        predictions, answers = evaluate_batch(
-            model, tokenizer, batch, answer_token_ids, device
+    for batch in tqdm(dataloader, desc=f"Evaluating {dataset_name}", disable=verbose):
+        predictions, answers, details = evaluate_batch(
+            model, tokenizer, batch, answer_token_ids, device, verbose=verbose
         )
-        # print(f"Predictions: {predictions}")
-        # print(f"Answers: {answers}")
         all_predictions.extend(predictions)
         all_answers.extend(answers)
+        all_details.extend(details)
     
     # Calculate metrics
     correct = sum(p == a for p, a in zip(all_predictions, all_answers))
@@ -396,6 +419,7 @@ def run_evaluation(
         "total": total,
         "predictions": all_predictions,
         "answers": all_answers,
+        "details": all_details,
     }
 
 
@@ -454,6 +478,11 @@ def parse_args():
         choices=["float32", "float16", "bfloat16"],
         default="bfloat16",
         help="Model precision"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed output for each question"
     )
     parser.add_argument(
         "--features_file",
@@ -516,7 +545,7 @@ def main():
     if args.features_file:
         features_file = Path(args.features_file)
     else:
-        features_file = project_root / "frequencies_second_time" / "features_to_clamp_layer7.txt"
+        features_file = project_root / "frequencies_second_time_7" / "features_to_clamp_layer7.txt"
     
     print(f"\nConfiguration:")
     print(f"  Model:                {args.model_name}")
@@ -687,7 +716,8 @@ def main():
         # Evaluate WMDP-Bio
         if not args.mmlu_only and wmdp_data:
             wmdp_results = run_evaluation(
-                model, tokenizer, wmdp_loader, answer_token_ids, device, "WMDP-Bio"
+                model, tokenizer, wmdp_loader, answer_token_ids, device, "WMDP-Bio",
+                verbose=args.verbose
             )
             results["wmdp_bio"] = {
                 "accuracy": wmdp_results["accuracy"],
@@ -699,7 +729,8 @@ def main():
         # Evaluate MMLU
         if not args.wmdp_only and mmlu_data:
             mmlu_results = run_evaluation(
-                model, tokenizer, mmlu_loader, answer_token_ids, device, "MMLU"
+                model, tokenizer, mmlu_loader, answer_token_ids, device, "MMLU",
+                verbose=args.verbose
             )
             results["mmlu"] = {
                 "accuracy": mmlu_results["accuracy"],

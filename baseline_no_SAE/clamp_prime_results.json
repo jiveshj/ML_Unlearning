@@ -2,23 +2,23 @@
   "model": "google/gemma-2-2b",
   "device": "cuda",
   "dtype": "bfloat16",
-  "timestamp": "2025-12-05T00:08:37.895121",
+  "timestamp": "2025-12-05T23:24:32.330221",
   "clamp_prime_config": {
     "sae_layer": 7,
     "sae_release": "gemma-scope-2b-pt-res-canonical",
-    "activation_threshold": 0.0001,
+    "activation_threshold": 10,
     "clamp_coefficient": -300.0,
     "num_features_clamped": 50,
-    "features_file": "/home/ubuntu/ML_Unlearning/frequencies_second_time/features_to_clamp_layer7.txt"
+    "features_file": "/home/ubuntu/ML_Unlearning/frequencies_second_time_7/features_to_clamp_layer7.txt"
   },
   "wmdp_bio": {
-    "accuracy": 0.28436763550667715,
-    "correct": 362,
+    "accuracy": 0.3110761979575805,
+    "correct": 396,
     "total": 1273
   },
   "mmlu": {
-    "accuracy": 0.3006896551724138,
-    "correct": 218,
+    "accuracy": 0.3117241379310345,
+    "correct": 226,
     "total": 725,
     "subjects": {
       "high_school_us_history": 204,

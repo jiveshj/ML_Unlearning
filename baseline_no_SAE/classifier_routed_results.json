@@ -2,13 +2,13 @@
   "model": "google/gemma-2-2b",
   "device": "cuda",
   "dtype": "bfloat16",
-  "timestamp": "2025-12-05T01:07:45.351498",
+  "timestamp": "2025-12-05T23:30:46.747575",
   "config": {
     "sae_layer": 7,
     "sae_release": "gemma-scope-2b-pt-res-canonical",
     "activation_threshold": 0.0001,
     "clamp_coefficient": -300.0,
-    "features_file": "/home/ubuntu/ML_Unlearning/frequencies_second_time/features_to_clamp_layer7.txt",
+    "features_file": "/home/ubuntu/ML_Unlearning/frequencies_second_time_7/features_to_clamp_layer7.txt",
     "classifier_path": "/home/ubuntu/ML_Unlearning/controller_model/intent_classifier_model"
   },
   "classification": {

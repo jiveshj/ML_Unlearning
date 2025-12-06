@@ -586,7 +586,7 @@ def main():
     if args.features_file:
         features_file = Path(args.features_file)
     else:
-        features_file = project_root / "frequencies_second_time" / "features_to_clamp_layer7.txt"
+        features_file = project_root / "frequencies_second_time_7" / "features_to_clamp_layer7.txt"
     
     if args.classifier_path:
         classifier_path = Path(args.classifier_path)
